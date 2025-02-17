@@ -1,26 +1,16 @@
-dnf install maven -y
+component=shipping
+source common.sh
 
-useradd roboshop
+maven_app_setup
 
-cp shipping.service /etc/systemd/system/shipping.service
+print_head Install MySQL Client
+dnf install mysql -y &>>$log_file
 
-rm -rf /app
-mkdir /app
+print_head Load Schema
+mysql -h mysql-dev.rdevopsb83.online -uroot -pRoboShop@1 < /app/db/schema.sql &>>$log_file
 
-curl -L -o /tmp/shipping.zip https://roboshop-artifacts.s3.amazonaws.com/shipping-v3.zip
-cd /app
-unzip /tmp/shipping.zip
+print_head Load User creation
+mysql -h mysql-dev.rdevopsb83.online -uroot -pRoboShop@1 < /app/db/app-user.sql &>>$log_file
 
-cd /app
-mvn clean package
-mv target/shipping-1.0.jar shipping.jar
-
-dnf install mysql -y
-
-mysql -h mysql-dev.shpatil17.online -uroot -pRoboShop@1 < /app/db/schema.sql
-mysql -h mysql-dev.shpatil17.online -uroot -pRoboShop@1 < /app/db/app-user.sql
-mysql -h mysql-dev.shpatil17.online -uroot -pRoboShop@1 < /app/db/master-data.sql
-
-systemctl daemon-reload
-systemctl enable shipping
-systemctl restart shipping
+print_head Load Master Data
+mysql -h mysql-dev.rdevopsb83.online -uroot -pRoboShop@1 < /app/db/master-data.sql &>>$log_file
